@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% load static %}
+
+  <img src="{% static 'images/png/wind4life_banner.png' %}"
+       alt="Wind 4 life Banner"
+       class="w-50" />
+  <p>
+    Welcome to the <b>Wind For Life</b> project.
+  </p>
+  <p>
+    This project is a technical test for <a href="https://www.fieldbox.ai/">Fieldbox AI</a>.
+  </p>
+  <p>
+    To access any of the content you first need an account, feel free to <a href="/accounts/signup">sign up</a>(<b>Non-admin</b>).
+    <br />
+    Confirmation is done through the link in the console locally.
+    <p>
+      <p>If you do not wish to create an account yourself, feel free to use the populated account:</p>
+      <ul>
+        <li>Username: admin</li>
+        <li>Password: 1234isagreatpassword</li>
+      </ul>
+      <p>
+        After your first <a href="/accounts/login">sign in</a> for this account, use the link in the console.
+      </p>
+      <p>
+        Here's a list of URLs that you can access once you're <a href="/accounts/login">signed in</a>:
+      </p>
+      <ul>
+        <li>
+          <a href="{% url 'admin:index' %}">Django Admin</a> <b>(Admins only, use the provided account)</b>
+        </li>
+        <li>
+          <a href="{% url 'api-docs' %}">Swagger</a>
+        </li>
+        <li>
+          <a href="/api">DRF API</a>
+        </li>
+      </ul>
+      <p>
+        I also recommend you take a look at the <a href="{% url 'about' %}">About</a> tab, it explains my thought process through this test, the mistakes I believe I initially made, evolutions for the project and such.
+      </p>
+    </p>
+  </p>
+{% endblock content %}

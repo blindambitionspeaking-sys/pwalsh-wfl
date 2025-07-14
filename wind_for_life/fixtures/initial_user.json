@@ -1,0 +1,19 @@
+[
+{
+  "model": "users.user",
+  "pk": 1,
+  "fields": {
+    "password": "argon2$argon2id$v=19$m=102400,t=2,p=8$TzBObmxlOVozWFJUVlVlRVRSSlV5Vg$K5qvhwrwTBIzVf9YMlRgJ5Uyyy5vQ6GKqApPLolCDNc",
+    "last_login": "2025-07-11T03:27:05.023Z",
+    "is_superuser": true,
+    "username": "admin",
+    "email": "admin@ggousseaudw4l.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-07-11T03:25:29.150Z",
+    "name": "",
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]

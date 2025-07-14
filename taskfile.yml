@@ -1,0 +1,163 @@
+version: '3'
+
+vars:
+  VENV_PATH: .venv
+  LOCAL_COMPOSE_FILENAME: docker-compose.local.yml
+  LOCAL_REQUIREMENTS_TXT_FILE: requirements/local.txt
+  LOCAL_REQUIREMENTS_IN_FILE: requirements/local.in
+  PROD_REQUIREMENTS_TXT_FILE: requirements/production.txt
+  PROD_REQUIREMENTS_IN_FILE: requirements/production.in
+
+tasks:
+  # DEV ENVIRONMENT PREREQUISITES
+  install-precommit:
+    - brew install pre-commit
+    - pre-commit install
+  install-ruff:
+    - brew install ruff
+  install-uv:
+    - brew install uv
+  install-deps:
+    desc: "Installs dev tools dependencies."
+    cmds:
+      - task: install-precommit
+      - task: install-ruff
+      - task: install-uv
+
+  # GENERIC COMMAND UTILITIES
+  execute-service:
+    internal: true
+    cmds:
+      - docker compose -f {{ .LOCAL_COMPOSE_FILENAME }} exec django {{ .SERVICE }} {{ .COMMAND }}
+  manage:
+    desc: "execute a manage.py command: Usage: task manage -- collectstatic"
+    cmd:
+      task: execute-service
+      vars:
+        COMMAND: "./manage.py {{.CLI_ARGS}}"
+
+  # APP UTILS
+  build:
+    desc: "Build local Dockerfile through compose services."
+    cmds:
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} build
+
+  up:
+    desc: "Ups local docker compose file."
+    cmds:
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} up {{.CLI_ARGS}}
+
+  down:
+    desc: "Downs local docker compose file."
+    cmds:
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} down
+
+  stop:
+    desc: "Stops local docker compose file"
+    cmds:
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} stop
+
+  reset-db:
+    desc: "Wipes all tables clean and create an empty DB with all migrations done."
+    dotenv:
+      - "./.envs/.local/.postgres"
+    cmds:
+      # cannot use execute-service because dotenv are not supported in internal/included tasks
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} exec postgres dropdb -f -U $POSTGRES_USER -p 5432 --if-exists $POSTGRES_DB
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} exec postgres createdb -U $POSTGRES_USER -p 5432 $POSTGRES_DB
+      - task: manage
+        vars:
+          CLI_ARGS: "migrate --no-input"
+
+  # MANAGEMENT COMMANDS
+  shell:
+    desc: "Opens a django shell."
+    cmds:
+      - task: manage
+        vars:
+          CLI_ARGS: "shell_plus"
+  migrate:
+    cmds:
+      - task: manage
+        vars:
+          CLI_ARGS: "migrate"
+  makemigrations:
+    cmds:
+      - task: manage
+        vars:
+          CLI_ARGS: "makemigrations"
+  collectstatic:
+    cmds:
+      - task: manage
+        vars:
+          CLI_ARGS: "collectstatic --noinput"
+  create_anemometers:
+    desc: >
+          "Create a batch of random anemometers bundled with random readings.
+          Usage: task create_anemometers -- num_anemometers num_readings_per_anemometer num_tags_per_reading"
+    cmds:
+      - task: manage
+        vars:
+          CLI_ARGS: "create_test_anemometers {{.CLI_ARGS}}"
+  # SETUP PREFILLED ENVIRONMENT
+  init-data:
+    cmds:
+      - task: reset-db
+      - task: collectstatic
+      - task: manage
+        vars:
+          CLI_ARGS: "loaddata initial_user"
+      - task: create_anemometers
+        desc: "Initializes DB with 50 anemometers each having 100 readings each having 2 tags."
+        vars:
+          CLI_ARGS: "50 100 2"
+  init-app:
+    desc: "Idempotent task initializing and starting the app from scratch."
+    cmds:
+      - task: build
+      - task: up
+        vars:
+          CLI_ARGS: "-d --wait"
+      - task: init-data
+
+  # OTHERS
+  tests:
+    cmds:
+      - task: execute-service
+        vars:
+          COMMAND: pytest {{ .CLI_ARGS }}
+  bash:
+    cmds:
+      - task: execute-service
+        vars:
+          COMMAND: bash
+  logs:
+    cmds:
+      - docker compose -f {{.LOCAL_COMPOSE_FILENAME}} logs -f {{ .CLI_ARGS }}
+# UV
+  build-venv:
+    cmds:
+      - uv venv
+  compile-deps:
+    desc: "Compiles and outputs in files to txt requirement files. Must be done when changing a requirement."
+    cmds:
+      - uv pip compile {{.LOCAL_REQUIREMENTS_IN_FILE}} --universal --output-file {{.LOCAL_REQUIREMENTS_TXT_FILE}}
+      - uv pip compile {{.PROD_REQUIREMENTS_IN_FILE}} --universal --output-file {{.PROD_REQUIREMENTS_TXT_FILE}}
+  sync-venv-local-deps:
+    cmds:
+      - uv pip sync {{.LOCAL_REQUIREMENTS_TXT_FILE}}
+  init-venv:
+    desc: "Compiles project dependencies and creates a venv with project dependencies."
+    cmds:
+      - task: compile-deps
+      - task: build-venv
+      - task: sync-venv-local-deps
+# Docs
+  docs-up:
+    desc: "Gets the sphinx documentation up."
+    cmds:
+      - docker compose -f docker-compose.docs.yml up docs
+  docs-down:
+    desc: "Downs the sphinx documentation."
+    cmds:
+      - docker compose -f docker-compose.docs.yml up docs

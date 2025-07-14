@@ -1,0 +1,27 @@
+{
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.supportAllPythonDocuments": true,
+    "ruff.lineLength": 80,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "notebook.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+      "allauth",
+      "collectstatic",
+      "createdb",
+      "devcontainers",
+      "dotenv",
+      "dropdb",
+      "favicons",
+      "makemigrations",
+      "noinput",
+      "sampledata",
+      "taggit",
+      "viewsets"
+    ],
+    "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit"
+    }
+  }
+}

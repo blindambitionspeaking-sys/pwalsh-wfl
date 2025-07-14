@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Evolutions and thoughts</h1>
+  <h2>Evolutions</h2>
+  <p>
+    Here are ideas for the evolution of the project, these are not implemented either because they're costly and as stated in the resume, it's supposed to be a POC for a refactor. This is mainly in the perspective of evolving project into a "real product".
+  </p>
+  <ul>
+    <li>Define a domain with the client (As it stands, product need and goal is too "light")</li>
+    <ul>
+      <li>Ex: How often does an anemometer record a reading? What's the purpose ultimately?</li>
+      <li>Transcribe business needs into domain models and build architecture around it.</li>
+    </ul>
+    <li>Depending on the need, choose the proper tools / technologies to answer the need.</li>
+    <li>
+      If the backend were to be really sizeable, with lots of functionalities, it'd be a good idea to define abstractions and implementations:
+    </li>
+    <ul>
+      <li>A repository acting between the Database layer and the domain layer.</li>
+      <li>A service, consuming the repository, separating business and database logic.</li>
+      <li>Exceptions based on the business world.</li>
+      <li>Goal is to make testing (though fake services and repositories) easier and decouple parts of the code.</li>
+    </ul>
+    <li>Setup proper docker image tagging/versioning.</li>
+    <li>Make use of optimized DB and tools for geospatial needs. (Postgis, Geodjango)</li>
+    <li>Evaluate the need for async.</li>
+  </ul>
+  <h2>Thoughts</h2>
+  <p>
+    This is mostly a part I write as I go for myself and posterity.
+    <br />
+    First mistake I believe I've made is overthinking the whole thing. I've started drawing architectures, reading about it, trying to think about all the best bases I could come up with but I should've noticed the very important line that is <b>"he kindly asks the engineering team if they could prepare a quick POC of an API"</b>.While the <b>expected level of quality</b> establishes standards, I still believe a POC should be a Proof Of Concept, something you can show quickly and that can be scraped. So I've stopped overthinking and this is half of the product of it and half trying to get this finally out.
+  </p>
+  <p>
+    Most of the evolutions quoted up there should probably be done if we're working on a product rather than a project, while this is supposed to be a refactor for a small backend, I still think it's a good idea to list them.
+  </p>
+{% endblock content %}
