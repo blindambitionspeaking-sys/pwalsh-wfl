@@ -1,3 +1,4 @@
+![Banner](./wind_for_life/static/images/png/wind4life_banner.png)
 # Table of Contents
 1. [Introduction](#introduction)
 2. [List of features to implement](#list-of-features-to-implement)
@@ -26,6 +27,8 @@ anemometer’s weekly/daily speeds
 # Getting started
 
 ## Installing dependencies
+
+You're going to need [docker](https://www.docker.com/) to run this project.
 
 I firmly recommend you install [go-task](https://taskfile.dev/installation/) to run the project's tasks but if you wish to not use the util you may take a look at `taskfile.yml`and run them yourself.
 
@@ -102,7 +105,7 @@ task manage -- management_command
 # ex: task manage -- collectstatic
 ````
 
-# Docs
+## Docs
 
 There is a sphinx documentation, nothing much in there but generated skeleton from docstrings and prototypes, can serve for future enduser documentation.
 
