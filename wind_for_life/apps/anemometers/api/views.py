@@ -1,4 +1,10 @@
 from datetime import timedelta
+from io import StringIO
+import csv
+from pydoc import pager
+from django.http import HttpResponse
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from django.db.models import Avg
 from django.db.models.query import QuerySet
@@ -79,7 +85,7 @@ class AnemometerViewSet(viewsets.ModelViewSet):
 
         serializer = RecentReadingsAnemometerSerializer(anemometers, many=True)
         return Response(serializer.data)
-
+    
 
 class ReadingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
     """Readings API"""
@@ -103,6 +109,26 @@ class ReadingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
         serializer = ReadingDetailSerializer(reading)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["GET"], url_path="export")
+    def export(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        export_format = request.query_params.get("format", "json").lower()
+       
+        # Handle pagination if requested
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = serializer.data
+            paginated_response = self.get_paginated_response(data)
+       
+        if export_format == "csv":
+            return self._export_csv(paginated_response.data["results"])
+        elif export_format == "json":
+            return paginated_response
+        else:
+            return paginated_response  # Default to JSON
+
 
 class AnemometerReadingViewSet(viewsets.ModelViewSet):
     """Readings nested into anemometers
@@ -118,6 +144,40 @@ class AnemometerReadingViewSet(viewsets.ModelViewSet):
         return Reading.objects.select_related("anemometer").filter(
             anemometer=self.kwargs["anemometer_pk"],
         )
+
+from io import StringIO
+import csv
+from django.http import HttpResponse
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+class ReadingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
+    # existing class body...
+
+    @action(detail=False, methods=["GET"], url_path="export")
+    def export(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        export_format = request.query_params.get("format", "json").lower()
+
+        if export_format == "csv":
+            return self._export_csv(serializer.data)
+
+        return Response(serializer.data)
+
+    def _export_csv(self, data):
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(["id", "speed", "recorded_at", "tags"])
+
+        for item in data:
+            tags = ",".join(item.get("tags", []))
+            writer.writerow([item["id"], item["speed"], item["recorded_at"], tags])
+
+        response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="readings.csv"'
+        return response
+
 
     def retrieve(self, request, anemometer_pk, pk=None):
         """Detailed reading shows anemometer value as well"""

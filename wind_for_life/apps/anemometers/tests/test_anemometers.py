@@ -1,4 +1,6 @@
-import pytest
+import csv
+from io import StringIO
+import =pytest
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -108,6 +110,42 @@ def test_patch_reading(auth_client):
     assert response.status_code == status.HTTP_200_OK
     assert response.data["speed"] == new_speed
 
+def test_export_readings_default_json(auth_client):
+    ReadingFactory.create_batch(3)
+    url = reverse("api:readings-export")
+    response = auth_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response["Content-Type"].startswith("application/json")
+    assert "results" in response.data
+    assert len(response.data["results"]) == 3
+    first = response.data["results"][0]
+    assert set(first.keys()) >= {"id", "speed", "recorded_at", "tags"}
+
+
+def test_export_readings_json_format(auth_client):
+    ReadingFactory.create_batch(2)
+    url = reverse("api:readings-export")
+    response = auth_client.get(url, {"format": "json"})
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response["Content-Type"].startswith("application/json")
+    assert "results" in response.data
+    assert len(response.data["results"]) == 2
+
+
+def test_export_readings_csv(auth_client):
+    ReadingFactory.create_batch(2)
+    url = reverse("api:readings-export")
+    response = auth_client.get(url, {"format": "csv", "limit": 10})
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response["Content-Type"] == "text/csv"
+    assert 'attachment; filename="readings.csv"' in response["Content-Disposition"]
+
+    rows = list(csv.reader(StringIO(response.content.decode("utf-8"))))
+    assert rows[0] == ["id", "speed", "recorded_at", "tags"]
+    assert len(rows) == 3  # header + 2 readings
 
 # -------------------------------------
 # 📌 NESTED ANEMOMETER READING VIEWSET
